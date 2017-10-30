@@ -1,0 +1,44 @@
+{"frames": {
+
+"menubutton.png":
+{
+	"frame": {"x":0,"y":0,"w":1300,"h":340},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":1300,"h":340},
+	"sourceSize": {"w":1300,"h":340}
+},
+"quitbutton.png":
+{
+	"frame": {"x":0,"y":348,"w":1300,"h":340},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":1300,"h":340},
+	"sourceSize": {"w":1300,"h":340}
+},
+"retrybutton.png":
+{
+	"frame": {"x":0,"y":696,"w":1300,"h":340},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":1300,"h":340},
+	"sourceSize": {"w":1300,"h":340}
+},
+"startbutton.png":
+{
+	"frame": {"x":0,"y":1044,"w":1300,"h":340},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":1300,"h":340},
+	"sourceSize": {"w":1300,"h":340}
+}},
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "buttons.png",
+	"format": "RGBA8888",
+	"size": {"w":1300,"h":1384},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:03c13342c685a8c0ad8af1a9a6724e32:aa4b1f319969ea4220e5d545a5d0e7b2:b34c8670b11bb20cb1751a70d3683e22$"
+}
+}

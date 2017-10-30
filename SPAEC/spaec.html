@@ -1,0 +1,834 @@
+<!doctype html>
+
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Test Game</title>
+	</head>
+	
+	 <style>* {padding: 0; margin: 0}</style>
+	 
+	<script src="pixi.min.js"></script>
+
+	 <body>
+		 <div align = "center">
+			<script type="text/javascript">
+				var Container = PIXI.Container,
+					autoDetectRenderer = PIXI.autoDetectRenderer,
+					loader = PIXI.loader,
+					resources = PIXI.loader.resources,
+					Sprite = PIXI.Sprite,
+					TextureCache = PIXI.utils.TextureCache
+					Rectangle = PIXI.Rectangle,
+					Text = PIXI.Text,
+					Graphics = PIXI.Graphics;
+
+				var
+				imgDir = "images"
+				,tilesetDir = "tilesets";
+				var 
+				screenWallX = 10
+				,screenWallY = 10
+				,screenWidth = 720
+				,screenHeight = 512;
+				
+				var cover = new Container();
+				var menu = new Container();
+				var game = new Container();
+				
+				var renderer = autoDetectRenderer(screenWidth, screenHeight);
+				document.body.appendChild(renderer.view);
+				renderer.view.style.position = 'absolute';
+				renderer.view.style.left = '50%';
+				renderer.view.style.top = '50%';
+				renderer.view.style.transform = 'translate3d( -50%, -50%, 0 )';
+
+				loader
+				  .add([
+						imgDir + "/title.png"
+						,imgDir + "/menuBG.png"
+						,imgDir + "/bgTinyStars.png"
+						,imgDir + "/bgBigStars.png"
+						,imgDir + "/logo.png"
+						,tilesetDir + "/ship.json"
+						,tilesetDir + "/buttons.json"
+						,tilesetDir + "/selects.json"
+						,tilesetDir + "/shots.json"
+						,tilesetDir + "/enemy.json"
+						,tilesetDir + "/explodes.json"
+						,imgDir + "/particle.png"
+						,imgDir + "/gameover.png"
+						//,imgDir + "/hitboxtest.png"
+				  ])
+				  .load(setup);
+				 
+				 
+				 //Objects & Variables
+				var
+				state
+				,title
+				,bgSpace
+				,bgTinyStars
+				,bgBigStars
+				,bgMain = new Container()
+				,logo
+				,ship1
+				,ship2
+				,selectedShip
+				,select
+				,startButton
+				,quitButton
+				,playShip
+				,playShot
+				,control
+				//,hitboxtest
+				;
+				
+				function setup() {
+				
+					title = new Sprite(resources[imgDir + "/title.png"].texture);
+							title.x = 0;
+							title.y = 0;
+							title.width = screenWidth;
+							title.height = screenHeight;
+							
+							cover.addChild(title);
+					
+					bgSpace = new Sprite(resources[imgDir + "/menuBG.png"].texture);
+							bgSpace.x = 0;
+							bgSpace.y = 0;
+							bgSpace.width = screenWidth;
+							bgSpace.height = screenHeight;
+							
+							bgMain.addChild(bgSpace);
+					
+					bgTinyStars = new Sprite(resources[imgDir + "/bgTinyStars.png"].texture);
+							bgTinyStars.width = screenWidth*2;
+							bgTinyStars.height = screenHeight;
+							bgTinyStars.x = 0;
+							bgTinyStars.y = 0;
+							bgTinyStars.vx = -1;
+							
+							bgMain.addChild(bgTinyStars);
+							
+					bgBigStars = new Sprite(resources[imgDir + "/bgBigStars.png"].texture);
+							bgBigStars.width = screenWidth*2;
+							bgBigStars.height = screenHeight;
+							bgBigStars.x = 0;
+							bgBigStars.y = 0;
+							bgBigStars.vx = -3;
+							
+							bgMain.addChild(bgBigStars);
+							
+							menu.addChild(bgMain);
+					
+					logo = new Sprite(resources[imgDir + "/logo.png"].texture);
+							logo.x = 0;
+							logo.y = 0;
+							logo.width = screenWidth;
+							logo.height = 140;
+							
+							menu.addChild(logo);
+					
+					selectedShip = 1;
+					
+					ship1 = new Sprite(resources[tilesetDir+"/ship.json"].textures["ship1_2a.png"]);
+							ship1.x = 260;
+							ship1.y = 200;
+							ship1.anchor.set(0.5, 0.5);
+							ship1.width = 80;
+							ship1.height = 55;
+							ship1.interactive = true;
+							ship1.buttonMode = true;
+							ship1.accessible = true;
+							ship1.click = function(){
+								selectedShip = 1;
+							}
+							
+							menu.addChild(ship1);
+					
+					ship2 = new Sprite(resources[tilesetDir+"/ship.json"].textures["ship2_0.png"]);
+							ship2.x = 460;
+							ship2.y = 200;
+							ship2.anchor.set(0.5, 0.5);
+							ship2.width = 80;
+							ship2.height = 55;
+							ship2.interactive = true;
+							ship2.buttonMode = true;
+							ship2.accessible = true;
+							ship2.click = function(){
+								selectedShip = 2;
+							}
+							
+							menu.addChild(ship2);
+							
+					select = new Sprite(resources[tilesetDir+"/selects.json"].textures["select1.png"]);
+							select.x = ship1.x;
+							select.y = ship1.y;
+							select.anchor.set(0.5, 0.5);
+							select.width = 150;
+							select.height = 25;
+							
+							menu.addChild(select);
+							
+					var
+					buttonwidth = 260
+					,buttonheight = 68;
+							
+					startButton = new Sprite(resources[tilesetDir+"/buttons.json"].textures["startbutton.png"]);
+							startButton.x = screenWidth/2;
+							startButton.y = 300;
+							startButton.anchor.set(0.5, 0.5);
+							startButton.width = buttonwidth;
+							startButton.height = buttonheight;
+							startButton.interactive = true;
+							startButton.buttonMode = true;
+							startButton.accessible = true;
+							startButton.click = function(){
+								startGame();
+							}
+							
+							menu.addChild(startButton);
+							
+					quitButton = new Sprite(resources[tilesetDir+"/buttons.json"].textures["quitbutton.png"]);
+							quitButton.x = screenWidth/2;
+							quitButton.y = 384;
+							quitButton.anchor.set(0.5, 0.5);
+							quitButton.width = buttonwidth;
+							quitButton.height = buttonheight;
+							quitButton.interactive = true;
+							quitButton.buttonMode = true;
+							quitButton.accessible = true;
+							quitButton.click = function(){
+								console.log("kwit");
+							}
+							
+							menu.addChild(quitButton);
+							
+					retryButton = new Sprite(resources[tilesetDir+"/buttons.json"].textures["retrybutton.png"]);
+							retryButton.x = screenWidth/2;
+							retryButton.y = 300;
+							retryButton.anchor.set(0.5, 0.5);
+							retryButton.width = buttonwidth;
+							retryButton.height = buttonheight;
+							retryButton.interactive = true;
+							retryButton.buttonMode = true;
+							retryButton.accessible = true;
+							retryButton.click = function(){
+								startGame();
+							}
+							retryButton.visible = false;
+							
+							menu.addChild(retryButton);
+							
+					menuButton = new Sprite(resources[tilesetDir+"/buttons.json"].textures["menubutton.png"]);
+							menuButton.x = screenWidth/2;
+							menuButton.y = 384;
+							menuButton.anchor.set(0.5, 0.5);
+							menuButton.width = buttonwidth;
+							menuButton.height = buttonheight;
+							menuButton.interactive = true;
+							menuButton.buttonMode = true;
+							menuButton.accessible = true;
+							menuButton.click = function(){
+								mainMenu();
+							}
+							menuButton.visible = false;
+							
+							menu.addChild(menuButton);
+							
+					playShip = new Sprite(resources[tilesetDir+"/ship.json"].textures["ship1_2a.png"]);
+							playShip.x = 45;
+							playShip.y = screenHeight/2;
+							playShip.anchor.set(0, 0);
+							playShip.width = 80;
+							playShip.height = 55;
+							playShip.vy = 0;
+							playShip.visible = false;
+							
+							menu.addChild(playShip);
+							
+					gameOverText = new Sprite(resources[imgDir+"/gameover.png"].texture);
+							gameOverText.x = screenWidth/2;
+							gameOverText.y = 150;
+							gameOverText.anchor.set(0.5, 0.5);
+							gameOverText.width = screenWidth/2;
+							gameOverText.height = gameOverText.width / 10;
+							gameOverText.vy = 0;
+							gameOverText.visible = false;
+							
+							menu.addChild(gameOverText);
+							
+					/*hitboxtest = new Sprite(resources[imgDir+"/hitboxtest.png"].texture);
+							hitboxtest.x = playShip.x;
+							hitboxtest.y = playShip.y;
+							hitboxtest.anchor.set(0, 0);
+							hitboxtest.width = playShipHitBoxW;
+							hitboxtest.height = playShipHitBoxH;
+							hitboxtest.vy = 0;
+							
+							menu.addChild(hitboxtest);*/
+							
+					 var  									 //https://help.adobe.com/en_US/AS2LCR/Flash_10.0/help.html?content=00000520.html  -- ASCII codes
+					 left = keyboard(65),
+					 right = keyboard(68),
+					 up = keyboard(87),
+					 down = keyboard(83),
+					 space = keyboard(32);
+					 
+					/*left.press = function(){
+						playShip.vx = -5;
+					}
+					left.release = function(){
+						playShip.vx = 0;
+						if(right.isDown){
+							playShip.vx = 5;
+						}
+					}
+					right.press = function(){
+						playShip.vx = 5;
+					}
+					right.release = function(){
+						playShip.vx = 0;
+						if(left.isDown){
+							playShip.vx = -5;
+						}
+					}*/
+					control = 2;
+					up.press = function(){
+						if(state == state_play){
+								playShip.vy = -5;
+								control = 1;
+						}
+					}
+					up.release = function(){
+						if(state == state_play){
+								playShip.vy = 0;
+								control = 2;
+								if(down.isDown){
+									playShip.vy = 5;
+								control = 3;
+								}
+						}
+					}
+					down.press = function(){
+						if(state == state_play){
+								playShip.vy= 5;
+								control = 3;
+						}
+					}
+					down.release = function(){
+						if(state == state_play){
+								playShip.vy = 0;
+								control = 2;
+								if(up.isDown){
+									playShip.vy = -5;
+								control = 1;
+								}
+						}
+					}
+					space.press = function(){
+						if(state == state_play)
+								shooting = true;
+					}
+					space.release = function(){
+						if(state == state_play)
+								shooting = false;
+					}
+					
+					state = state_cover;
+					gameLoop();
+				}
+					
+				function gameLoop(){
+					  //Loop this function at 60 frames per second
+					  requestAnimationFrame(gameLoop);
+					  state();
+					  //Render the stage to see the animation
+				}
+				
+				var startDelay = 120;
+				
+				function state_cover(){
+						if(startDelay > 0){
+							startDelay--;
+						}else{
+							state = state_menu;
+						}
+						renderer.render(cover);
+				}	
+				
+				function state_menu(){
+						backgroundScroll();
+						animateShip();
+						animateSelect();
+						renderer.render(menu);
+				}
+					
+				var shooting = false;
+					
+				function startGame(){
+						game.addChild(bgMain);
+						game.addChild(playShip);
+						playShip.visible = true;
+						prepareParticles();
+						retryButton.visible = false;
+						menuButton.visible = false;
+						gameOverText.visible = false;
+						game.addChild(retryButton);
+						game.addChild(menuButton);
+						game.addChild(gameOverText);
+						state = state_play;
+						//game.addChild(hitboxtest);
+						//hitboxtest.x = playShip.x + playShipHitBoxX;
+						//hitboxtest.y = playShip.y + playShipHitBoxY;
+				}
+					
+				function state_play(){
+						playShip.y += playShip.vy;
+						contain(playShip, {x: screenWallX, y: screenWallY, width: screenWidth - screenWallX, height: screenHeight - screenWallY});
+						backgroundScroll();
+						animateBullets();
+						animatePlayShip();
+						animateEnemies();
+						animateExplosions();
+						spawnEnemy();
+						if(cSpawn > 0){
+							cSpawn--;
+						}
+						if(cReload > 0){
+							cReload--;
+						}
+						if(shooting)
+								shoot();
+						renderer.render(game);
+				}
+				
+				function endGame(){
+						state = state_end;
+						gameOverText.visible = true;
+						retryButton.visible = true;
+						menuButton.visible = true;
+						playShip.visible = false;
+				}
+				
+				function state_end(){
+						backgroundScroll();
+						animateBullets();
+						animateEnemies();
+						animateExplosions();
+						renderer.render(game);
+				}
+				
+				function mainMenu(){
+						state = state_menu;
+				}
+				
+				var i = 0;
+				
+				function animateShip(){
+						i++;
+						var ship;
+						switch(selectedShip){
+							case 1:
+								ship = ship1;
+								ship2.texture = TextureCache["ship2_0.png"];
+								select.x = ship1.x;
+								break;
+							case 2:
+								ship = ship2;
+								select.x = ship2.x;
+								ship1.texture = TextureCache["ship1_0.png"];
+								break;
+						}
+						if(i >= 3 && i < 6){
+							ship.texture = TextureCache["ship"+selectedShip+"_2a.png"];
+						}else if(i >= 6 && i < 9){
+							ship.texture = TextureCache["ship"+selectedShip+"_2b.png"];
+						}else if(i >= 9){
+							i = 1;
+						}
+				}
+				
+				function animatePlayShip(){
+						i++;
+						var ship;
+						switch(selectedShip){
+							case 1:
+								ship = ship1;
+								ship2.texture = TextureCache["ship2_0.png"];
+								select.x = ship1.x;
+								break;
+							case 2:
+								ship = ship2;
+								select.x = ship2.x;
+								ship1.texture = TextureCache["ship1_0.png"];
+								break;
+						}
+						if(i >= 3 && i < 6){
+							playShip.texture = TextureCache["ship"+selectedShip+"_"+control+"a.png"];
+						}else if(i >= 6 && i < 9){
+							playShip.texture = TextureCache["ship"+selectedShip+"_"+control+"b.png"];
+						}else if(i >= 9){
+							i = 1;
+						}
+				}
+				
+				var i2 = 0;
+				
+				function animateSelect(){
+						i2++;
+						if(i2 >= 3 && i2 < 6){
+							select.texture = TextureCache["select1.png"];
+						}else if(i2 >= 6 && i2 < 9){
+							select.texture = TextureCache["select2.png"];
+						}else if(i2 >= 9 && i2 < 12){
+							select.texture = TextureCache["select3.png"];
+						}else if(i2 >= 12){
+							i2 = 1;
+						}
+				}
+				
+				function backgroundScroll(){
+						  bgTinyStars.x += bgTinyStars.vx;
+						  if(bgTinyStars.x <= -screenWidth){
+								bgTinyStars.x = 0;
+						  }
+						  
+						  bgBigStars.x += bgBigStars.vx;
+						  if(bgBigStars.x  <= -screenWidth){
+								bgBigStars.x =  0;
+						  }
+				}
+				
+				function keyboard(keyCode) {
+						  var key = {};
+						  key.code = keyCode;
+						  key.isDown = false;
+						  key.isUp = true;
+						  key.press = undefined;
+						  key.release = undefined;
+						  //The `downHandler`
+						  key.downHandler = function(event) {
+							if (event.keyCode === key.code) {
+							  if (key.isUp && key.press) key.press();
+							  key.isDown = true;
+							  key.isUp = false;
+							}
+							event.preventDefault();
+						  };
+						  //The `upHandler`
+						  key.upHandler = function(event) {
+							if (event.keyCode === key.code) {
+							  if (key.isDown && key.release) key.release();
+							  key.isDown = false;
+							  key.isUp = true;
+							}
+							event.preventDefault();
+						  };
+						  //Attach event listeners
+						  window.addEventListener(
+							"keydown", key.downHandler.bind(key), false
+						  );
+						  window.addEventListener(
+							"keyup", key.upHandler.bind(key), false
+						  );
+						  return key;
+				}
+				
+				function contain(sprite, container) {
+
+						  var collision = undefined;
+
+						  //Left
+						  if (sprite.x < container.x) {
+							sprite.x = container.x;
+							collision = "left";
+						  }
+						  //Top
+						  if (sprite.y < container.y) {
+							sprite.y = container.y;
+							collision = "top";
+						  }
+						  //Right
+						  if (sprite.x + sprite.width > container.width) {
+							sprite.x = container.width - sprite.width;
+							collision = "right";
+						  }
+						  //Bottom
+						  if (sprite.y + sprite.height > container.height) {
+							sprite.y = container.height - sprite.height;
+							collision = "bottom";
+						  }
+						  //Return the `collision` value
+						  return collision;
+				}
+				
+				var bullets = [];
+				var bulletSpeed = 6;
+				var bulletAnim = 0;
+				
+				function animateBullets(){
+						bulletAnim++;
+						for (var bullet=0; bullet < bullets.length; bullet++){
+								bullets[bullet].x += bulletSpeed;
+								
+								if(bulletAnim < 8){
+										bullets[bullet].texture = TextureCache["shot"+selectedShip+"a.png"];
+								}
+								else if (bulletAnim >= 8 && bulletAnim < 16){
+										bullets[bullet].texture = TextureCache["shot"+selectedShip+"b.png"];
+								}
+								else{
+										bulletAnim = 0;
+								}
+								
+								if(bullets[bullet].x > screenWidth  * 2){
+										bullets[bullet].x = -screenWidth;
+										var b = bullets[bullet];
+										bullets.splice(bullets[bullet], 1);
+										game.removeChild(b);
+								}
+						}
+				}
+				
+				var
+				offsetx = 35
+				,offsety = 27
+				;
+				
+				var reload = 60;
+				var cReload = 0;
+				
+				function shoot(){
+						if(cReload <= 0){
+								var bullet = new Sprite(resources[tilesetDir+"/shots.json"].textures["shot"+selectedShip+"a.png"]);
+										bullet.x = playShip.x + offsetx;
+										bullet.y = playShip.y + offsety;
+										bullet.width = 50;
+										bullet.height = 18;
+										game.addChild(bullet);
+										bullets.push(bullet);
+								cReload = reload;
+						}
+				}
+
+				var enemySpeed = -4;
+				var enemyAnim = 0;
+				
+				function animateEnemies(){
+						enemyAnim++;
+						for (var enemy=0; enemy < enemies.length; enemy++){
+								enemies[enemy].x += enemySpeed;
+								
+								if(enemyAnim < 8){
+										enemies[enemy].texture = TextureCache["enemya.png"];
+								}
+								else if (enemyAnim >= 8 && enemyAnim < 16){
+										enemies[enemy].texture = TextureCache["enemyc.png"];
+								}
+								else{
+										enemyAnim = 0;
+								}
+								
+								if(enemies[enemy].x < 0 - (screenWidth * 2)){
+										enemies[enemy].x = screenWidth*2;
+										var e = enemies[enemy];
+										enemies.splice(enemies[enemy], 1);
+										game.removeChild(e);
+								}
+								
+								try{
+									if(state == state_play){
+										if(hitTestRectangle(
+												(playShip.x + playShipHitBoxX)
+												,(playShip.y + playShipHitBoxY)
+												,playShipHitBoxW
+												,playShipHitBoxH
+												
+												,enemies[enemy].x + enemyHitBoxX
+												,enemies[enemy].y + enemyHitBoxY
+												,enemyHitBoxW
+												,enemyHitBoxH
+										)){
+											if(enemies[enemy].x > 0 && enemies[enemy].y > 0 && enemies[enemy].x < screenWidth && enemies[enemy].y < screenHeight){
+												console.log("X: "+enemies[enemy].x + ", Y: " + enemies[enemy].y);
+												explode(playShip.x, playShip.y);
+												endGame();
+											}
+										}
+									}
+								}catch (err){
+										console.log(err);
+								}
+								
+								for(var bullet=0; bullet < bullets.length; bullet++){
+										if(hitTestRectangle(
+											(bullets[bullet].x + bulletHitBoxX)
+											,(bullets[bullet].y + bulletHitBoxY)
+											,bulletHitBoxW
+											,bulletHitBoxH
+											
+											,enemies[enemy].x + bulletHitBoxX
+											,enemies[enemy].y + bulletHitBoxY
+											,enemyHitBoxW
+											,enemyHitBoxH
+										)){
+											explode(enemies[enemy].x, enemies[enemy].y);
+											bullets[bullet].x = screenWidth + (bullets[bullet].width * 2);
+											enemies[enemy].x = 0 - (enemies[enemy].width * 2);
+											break;
+										}
+								}
+						}
+				}
+				
+				var
+				enemies = []
+				,spawnTime = 120
+				,cSpawn = 180;
+				
+				function spawnEnemy(){
+						if(cSpawn <= 0){
+								var enemy = new Sprite(resources[tilesetDir+"/enemy.json"].textures["enemya.png"]);
+										enemy.width = 70;
+										enemy.height = 40;
+										enemy.x = screenWidth + enemy.width*2;
+										enemy.y = (Math.random() * ((screenHeight - screenWallY) - screenWallY));
+														// screenHeight - screenWallY = max
+														// screenWallY = min
+										game.addChild(enemy);
+										enemies.push(enemy);
+								cSpawn = spawnTime;
+						}
+				}
+				
+				var
+				playShipHitBoxX = 11
+				,playShipHitBoxY = 15
+				,playShipHitBoxW = 70
+				,playShipHitBoxH = 25
+				,enemyHitBoxX = 2
+				,enemyHitBoxY = 2
+				,enemyHitBoxW = 66
+				,enemyHitBoxH = 36
+				,bulletHitBoxX = 9
+				,bulletHitBoxY = 1
+				,bulletHitBoxW = 40
+				,bulletHitBoxH = 16
+				;
+				
+				function hitTestRectangle(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h) {
+					  //Define the variables we'll need to calculate
+					  var hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
+
+					  //hit will determine whether there's a collision
+					  hit = false;
+
+					  //Find the center points of each sprite
+					  var r1centerX = r1x + r1w / 2;
+					  var r1centerY = r1y + r1h / 2;
+					  var r2centerX = r2x + r2w / 2;
+					  var r2centerY = r2y + r2h / 2;
+
+					  //Find the half-widths and half-heights of each sprite
+					  var r1halfWidth = r1w / 2;
+					  var r1halfHeight = r1h / 2;
+					  var r2halfWidth = r2w / 2;
+					  var r2halfHeight = r2h / 2;
+
+					  //Calculate the distance vector between the sprites
+					  vx = r1centerX - r2centerX;
+					  vy = r1centerY - r2centerY;
+
+					  //Figure out the combined half-widths and half-heights
+					  combinedHalfWidths = r1halfWidth + r2halfWidth;
+					  combinedHalfHeights = r1halfHeight + r2halfHeight;
+
+					  //Check for a collision on the x axis
+					  if (Math.abs(vx) < combinedHalfWidths) {
+
+						//A collision might be occuring. Check for a collision on the y axis
+						if (Math.abs(vy) < combinedHalfHeights) {
+
+						  //There's definitely a collision happening
+						  hit = true;
+						} else {
+
+						  //There's no collision on the y axis
+						  hit = false;
+						}
+					  } else {
+
+						//There's no collision on the x axis
+						hit = false;
+					  }
+
+					  //`hit` will be either `true` or `false`
+					  return hit;
+				};
+								
+				function animateExplosions(){
+						for(var exp = 0; exp < explosions.length; exp++){
+								explosions[exp][1]+= 0.2;
+								if(explosions[exp][1] < 8){
+									explosions[exp][0].texture = TextureCache["explode"+Math.floor(explosions[exp][1])+".png"];
+								}else{
+									explosions[exp][0].x = -screenWidth;
+									var e = explosions[exp][0];
+									explosions.splice(explosions[exp], 1);
+									game.removeChild(e);
+								}
+						}
+						for(var par = 0; par < particles.length; par++){
+								particles[par].x += particles[par].vx;
+								particles[par].y += particles[par].vy;
+						}
+				}
+				
+				var
+				explosions = []
+				, particlesSpawned = 15
+				, particles = []
+				;
+				
+				function explode(posX, posY){
+						if( posX > 0 && posY > 0 && posX < screenWidth && posY < screenHeight){
+							var explosion = new Sprite(resources[tilesetDir+"/explodes.json"].textures["explode1.png"]);
+									explosion.width = 80;
+									explosion.height = 60;
+									explosion.x = posX;
+									explosion.y = posY;
+									game.addChild(explosion);
+									explosions.push([explosion,1]);
+									for(var par = 0; par < particles.length; par++){
+											particles[par].x = explosion.x + (explosion.width/2);
+											particles[par].y = explosion.y + (explosion.height/2);
+											particles[par].vx = (Math.random() * 20) - 10;
+											particles[par].vy = (Math.random() * 20) - 10;
+									}
+						}else{
+								console.log("lol");
+						}
+				}
+				
+				function prepareParticles(){
+						for(var p=0; p<particlesSpawned; p++){
+								var particle = new Sprite(resources[imgDir+"/particle.png"].texture);
+										particle.width = 5;
+										particle.height = 5;
+										particle.x = -20;
+										particle.y = -20;
+										particle.vx = 0;
+										particle.vy = 0;
+										particles.push(particle);
+										game.addChild(particle);
+						}
+				}
+				
+			</script>
+		</div>
+	</body>
+
+</html>
